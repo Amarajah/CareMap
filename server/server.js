@@ -12,6 +12,8 @@ const { initializeService } = require('./services/articleAggregatorService');
 const authRoutes = require('./routes/auth');
 const articleRoutes = require('./routes/articles');
 
+const bookmarkRoutes = require('./routes/bookmarks');
+
 // MIDDLEWARE SETUP
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
@@ -50,6 +52,9 @@ app.get('/health', async (req, res) => {
 // ROUTES
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes); 
+
+// Bookmarks
+app.use('/api/bookmarks', bookmarkRoutes);
 
 // Test route
 app.get('/', (req, res) => {
@@ -138,7 +143,6 @@ const startServer = async () => {
     });
   }
 };
-
 
 // GRACEFUL SHUTDOWN HANDLERS
 process.on('SIGTERM', async () => {

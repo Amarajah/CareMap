@@ -11,10 +11,10 @@ import Login from './pages/login';
 import './index.css';
 
 
-const { initializeService } = require('./services/articleAggregatorService');
+//const { initializeService } = require('./services/articleAggregatorService');
 
 // Start the service
-initializeService();
+//initializeService();
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

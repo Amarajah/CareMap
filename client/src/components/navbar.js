@@ -27,7 +27,6 @@ const Navbar = () => {
     { name: 'ClinicMap', path: '/clinicmap' },
     { name: 'Home', path: '/home' },
     { name: 'InfoHub', path: '/infohub' },
-    { name: 'Todo', path: '/todo' },
   ];
 
   return (

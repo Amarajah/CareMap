@@ -44,8 +44,7 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Contact</h3>
             <div className="space-y-2 text-gray-400">
-              <p>support@caremap.com</p>
-              <p>Healthcare District, Medical City</p>
+              <p>naomi.ibeh69@gmail.com</p>
             </div>
             
             {/* Social Links */}
