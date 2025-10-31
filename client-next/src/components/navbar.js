@@ -55,7 +55,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="bg-transparent shadow-lg sticky top-0 z-50" style={{backgroundColor: 'transparent', background: 'none'}}>
+    <nav className="bg-white shadow-lg sticky top-0 z-50" style={{backgroundColor: 'white', background: 'white'}}>
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           

@@ -296,7 +296,7 @@ export default function AboutCareMap() {
       {!isLoggedIn && (
         <footer className="py-8 bg-gray-800 text-white text-center">
           <div className="max-w-6xl mx-auto px-4">
-            <p className="text-lg mb-2">© 2024 CareMap. All rights reserved.</p>
+            <p className="text-lg mb-2">© 2025 CareMap. All rights reserved.</p>
             <p className="text-gray-400">Connecting you to quality healthcare, everywhere.</p>
           </div>
         </footer>

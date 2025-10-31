@@ -9,7 +9,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-green-50 flex items-center justify-center p-8">
       <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
         
-        {/* Left side - Text content */}
+        {/* Left side */}
         <div className="space-y-8">
           {/* Logo and brand */}
           <div className="flex items-center space-x-4">
@@ -18,7 +18,7 @@ export default function HomePage() {
               <span className="text-white text-3xl font-bold">C</span>
             </div>
             
-            {/* CareMap text with animated effect */}
+            {/* Animated effect */}
             <h1 className="text-6xl font-bold">
               <span 
                 className="bg-gradient-to-r from-blue-600 via-green-600 to-blue-800 bg-clip-text text-transparent animate-pulse"
@@ -67,10 +67,10 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Right side - Image placeholder (replacing card stack) */}
+        {/* Right side - Image placeholder */}
         <div className="relative">
           <div className="bg-white rounded-3xl shadow-2xl p-8 transform hover:scale-105 transition-transform duration-500">
-            {/* Image placeholder - replace with your xyz.png */}
+            {/* Image placeholder */}
             <div className="aspect-square bg-gradient-to-br from-blue-100 to-green-100 rounded-2xl flex items-center justify-center">
               <div className="text-center space-y-4">
                 <p className="text-gray-600"><img src="/caremap.png" alt="CareMap" /></p>
@@ -78,7 +78,7 @@ export default function HomePage() {
             </div>
           </div>
           
-          {/* Floating elements for visual appeal */}
+          {/* Floating elements */}
           <div className="absolute -top-4 -right-4 w-20 h-20 bg-blue-200 rounded-full opacity-60 animate-bounce"></div>
           <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-green-200 rounded-full opacity-60 animate-pulse"></div>
         </div>

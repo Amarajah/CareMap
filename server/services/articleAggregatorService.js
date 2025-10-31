@@ -3,6 +3,7 @@ const NodeCache = require('node-cache');
 const cheerio = require('cheerio');
 const fetch = require('node-fetch');
 const db = require('../database/db'); // PostgreSQL connection
+const { registry } = require('../scrapers'); // Import source registry
 
 
 // Memory cache for recent articles (24 hours max, 500 articles limit)
@@ -130,11 +131,11 @@ const parseRSSFeed = async (rssUrl, sourceKey) => {
 
 /**
  * STEP 3: WEB SCRAPING FALLBACK
- * Scrape web pages directly when RSS feeds aren't available ("fallback to scraping" part of hybrid approach)
+ * Scrape web pages directly when RSS feeds aren't available
  */
 const scrapeWebPage = async (pageUrl, sourceKey) => {
   try {
-    console.log(` Scraping web page: ${pageUrl}`);
+    console.log(`Scraping web page: ${pageUrl}`);
     
     const response = await fetch(pageUrl, {
       headers: {
@@ -149,25 +150,9 @@ const scrapeWebPage = async (pageUrl, sourceKey) => {
     
     const html = await response.text();
     const $ = cheerio.load(html);
-    const articles = [];
     
-    // Source-specific scraping logic
-    switch (sourceKey) {
-      case 'healthywomen':
-        articles.push(...scrapeHealthyWomen($));
-        break;
-      case 'healthcom':
-        articles.push(...scrapeHealthCom($));
-        break;
-      case 'guardian':
-        articles.push(...scrapeGuardian($));
-        break;
-      case 'bbc':
-        articles.push(...scrapeBBC($));
-        break;
-      default:
-        articles.push(...scrapeGeneric($));
-    }
+    // USE REGISTRY INSTEAD OF SWITCH STATEMENT 
+    const articles = registry.scrape(sourceKey, $);
     
     // Process each scraped article
     for (const article of articles) {
@@ -189,136 +174,11 @@ const scrapeWebPage = async (pageUrl, sourceKey) => {
     console.log(`Web scraping successful: ${articles.length} articles from ${pageUrl}`);
     return articles;
     
-  } catch (error) {
-    console.log(`Web scraping failed for ${pageUrl}:`, error.message);
-    return [];
-  }
-};
-
-/**
- * SOURCE-SPECIFIC SCRAPING FUNCTIONS
- * Each source has different HTML structure, so we need custom scraping logic
- */
-
-// Scrape HealthyWomen directory page
-const scrapeHealthyWomen = ($) => {
-  const articles = [];
-  
-  // Look for common article selectors on HealthyWomen
-  $('.css-1wy8uaa, .css-article-card, article, .post').each((i, element) => {
-    const $el = $(element);
-    const title = $el.find('h2, h3, .title, .headline').first().text().trim();
-    const link = $el.find('a').first().attr('href');
-    const summary = $el.find('p, .summary, .excerpt').first().text().trim();
-    
-    if (title && link) {
-      articles.push({
-        title,
-        summary: summary.substring(0, 300) + '...',
-        link: link.startsWith('http') ? link : `https://www.healthywomen.org${link}`,
-        sourceName: 'HealthyWomen'
-      });
+    } catch (error) {
+      console.log(`Web scraping failed for ${pageUrl}:`, error.message);
+      return [];
     }
-  });
-  
-  return articles;
-};
-
-// Scrape HealthCom blog page
-const scrapeHealthCom = ($) => {
-  const articles = [];
-  
-  // Look for HealthCom blog post selectors
-  $('article, .post, .blog-post, .entry').each((i, element) => {
-    const $el = $(element);
-    const title = $el.find('h2, h3, .entry-title, .post-title').first().text().trim();
-    const link = $el.find('a').first().attr('href');
-    const summary = $el.find('p, .excerpt, .entry-summary').first().text().trim();
-    
-    if (title && link) {
-      articles.push({
-        title,
-        summary: summary.substring(0, 300) + '...',
-        link: link.startsWith('http') ? link : `https://www.health.com${link}`,
-        sourceName: 'HealthCom'
-      });
-    }
-  });
-  
-  return articles;
-};
-
-// Scrape Guardian Nigeria health section
-const scrapeGuardian = ($) => {
-  const articles = [];
-  
-  // Look for Guardian Nigeria article selectors
-  $('article, .post, .ng-post, .entry').each((i, element) => {
-    const $el = $(element);
-    const title = $el.find('h2, h3, .post-title, .entry-title').first().text().trim();
-    const link = $el.find('a').first().attr('href');
-    const summary = $el.find('p, .excerpt, .post-excerpt').first().text().trim();
-    
-    if (title && link) {
-      articles.push({
-        title,
-        summary: summary.substring(0, 300) + '...',
-        link: link.startsWith('http') ? link : `https://guardian.ng${link}`,
-        sourceName: 'Guardian Nigeria'
-      });
-    }
-  });
-  
-  return articles;
-};
-
-// Scrape BBC Health news page
-const scrapeBBC = ($) => {
-  const articles = [];
-  
-  // Look for BBC news article selectors
-  $('article, .media, .story-body, .gs-c-promo').each((i, element) => {
-    const $el = $(element);
-    const title = $el.find('h3, h2, .gs-c-promo-heading, .media__title').first().text().trim();
-    const link = $el.find('a').first().attr('href');
-    const summary = $el.find('p, .gs-c-promo-summary, .media__summary').first().text().trim();
-    
-    if (title && link) {
-      articles.push({
-        title,
-        summary: summary.substring(0, 300) + '...',
-        link: link.startsWith('http') ? link : `https://www.bbc.com${link}`,
-        sourceName: 'BBC Health'
-      });
-    }
-  });
-  
-  return articles;
-};
-
-// Generic scraping for unknown sources
-const scrapeGeneric = ($) => {
-  const articles = [];
-  
-  // Generic selectors that work on most news/blog sites
-  $('article, .post, .entry, .story').each((i, element) => {
-    const $el = $(element);
-    const title = $el.find('h1, h2, h3, .title, .headline').first().text().trim();
-    const link = $el.find('a').first().attr('href');
-    const summary = $el.find('p').first().text().trim();
-    
-    if (title && link) {
-      articles.push({
-        title,
-        summary: summary.substring(0, 300) + '...',
-        link,
-        sourceName: 'Unknown Source'
-      });
-    }
-  });
-  
-  return articles;
-};
+  };
 
 /**
  * STEP 4: OPEN GRAPH DATA EXTRACTION
