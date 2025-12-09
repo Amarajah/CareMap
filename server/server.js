@@ -14,7 +14,18 @@ const articleRoutes = require('./routes/articles');
 
 const bookmarkRoutes = require('./routes/bookmarks');
 
-// MIDDLEWARE SETUP
+const { swaggerUi, swaggerSpec } = require('./swagger');
+console.log('\n--- Swagger Debug ---');
+console.log('Spec object loaded:', !!swaggerSpec);
+if (swaggerSpec && swaggerSpec.paths) {
+  console.log('Total paths found:', Object.keys(swaggerSpec.paths).length);
+  console.log('Example path:', Object.keys(swaggerSpec.paths)[0]);
+} else {
+  console.error('CRITICAL: Swagger spec is empty or invalid. Check file paths in swagger.js.');
+}
+console.log('---------------------\n');
+
+// Middleware Setup
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true
@@ -29,7 +40,54 @@ app.use((req, res, next) => {
   next();
 });
 
-// HEALTH CHECK ENDPOINT
+// Health Check Endpoint
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Server & Database Health Check
+ *     tags: [Health]
+ *     description: Returns the overall API and server status.
+ *     responses:
+ *       200:
+ *         description: Server and database are healthy.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: healthy
+ *                 message:
+ *                   type: string
+ *                   example: Server and database are running
+ *                 database:
+ *                   type: string
+ *                   example: connected
+ *                 timestamp:
+ *                   type: string
+ *       500:
+ *         description: Database connection failed or server is unhealthy.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: unhealthy
+ *                 message:
+ *                   type: string
+ *                   example: Database connection failed
+ *                 error:
+ *                   type: string
+ *                   example: Connection timeout
+ *                 timestamp:
+ *                   type: string
+ */
+
 app.get('/health', async (req, res) => {
   try {
     await db.query('SELECT 1 as test');
@@ -49,7 +107,7 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// ROUTES
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes); 
 
@@ -57,6 +115,72 @@ app.use('/api/articles', articleRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 
 // Test route
+
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Server & Database Health Check
+ *     tags: [Health]
+ *     description: Returns API status, version, and available endpoints.
+ *     responses:
+ *       200:
+ *         description: API is running successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: CareMap API is running!
+ *                 version:
+ *                   type: string
+ *                   example: 1.0.0
+ *                 endpoints:
+ *                   type: object
+ *                   example:
+ *                     health: "GET /health"
+ *                     login: "POST /api/auth/login"
+ *                     signup: "POST /api/auth/signup"
+ *                 availableSources:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["healthywomen", "healthcom", "guardian", "bbc"]
+ *
+ *       404:
+ *         description: Route not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Route / not found"
+ *
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Internal server error"
+ *                 error:
+ *                   type: string
+ *                   example: "Something went wrong"
+ */
+
 app.get('/', (req, res) => {
   res.json({ 
     message: 'CareMap API is running!',
@@ -81,7 +205,19 @@ app.get('/', (req, res) => {
   });
 });
 
-// ERROR HANDLING MIDDLEWARE
+// Swagger Documentation
+app.use(
+  '/api-docs', 
+  swaggerUi.serve, 
+  swaggerUi.setup(swaggerSpec, {
+    //customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'CareMap API Docs',
+    // This is to enable the explorer search bar
+    explorer: true 
+  })
+);
+
+// Error Handling Middleware
 app.use((error, req, res, next) => {
   console.error('Unhandled error:', error);
   res.status(500).json({
@@ -99,7 +235,7 @@ app.use((req, res) => {
   });
 });
 
-// SERVER STARTUP
+// Server Startup
 const PORT = process.env.PORT || 8000;
 
 const startServer = async () => {
@@ -129,6 +265,7 @@ const startServer = async () => {
       console.log('   1. Check health endpoint: GET /health');
       console.log('   2. Watch for article aggregation logs');
       console.log('   3. Articles will be available once first fetch completes\n');
+      console.log(`API Docs: http://localhost:${PORT}/api-docs`);
     });
     
   } catch (error) {
@@ -144,7 +281,7 @@ const startServer = async () => {
   }
 };
 
-// GRACEFUL SHUTDOWN HANDLERS
+// Graceful Shutdown Handlers
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...');
   try {

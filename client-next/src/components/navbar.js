@@ -48,9 +48,9 @@ const Navbar = () => {
   };
 
   const navLinks = [
+    { name: 'Home', path: '/home' },
     { name: 'About', path: '/about' },
     { name: 'ClinicMap', path: '/clinicmap' },
-    { name: 'Home', path: '/home' },
     { name: 'InfoHub', path: '/infohub' },
   ];
 

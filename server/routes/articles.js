@@ -3,6 +3,44 @@ const { getArticles, getCategories, aggregateAllArticles } = require('../service
 
 const router = express.Router();
 
+// ENDPOINT TO FETCH ALL ARTICLES
+
+/**
+ * @swagger
+ * /api/articles:
+ *   get:
+ *     summary: Get aggregated health articles
+ *     tags: [Articles]
+ *     description: Fetches articles from all sources with support for search, category filtering, source filtering, and per-source limits.
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Keyword search term
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Category filter (e.g., Mental Health, Nutrition)
+ *       - in: query
+ *         name: source
+ *         schema:
+ *           type: string
+ *           enum: [healthywomen, healthcom, guardian, bbc]
+ *         description: Filter by a specific article source
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Total number of results you want returned (evenly divided across 4 sources)
+ *     responses:
+ *       200:
+ *         description: Articles fetched successfully
+ *       500:
+ *         description: Server error while fetching articles
+ */
+
 router.get('/', async (req, res) => {
   try {
     const { 
@@ -77,13 +115,36 @@ router.get('/', async (req, res) => {
 // SEARCH ENDPOINT (Alternative way to search)
 
 /**
- * GET /api/articles/search
- * Search articles with keyword and get detailed relevance scoring
- * 
- * Query parameters:
- * - q: search query (required)
- * - category: filter by category
- * - source: filter by source
+ * @swagger
+ * /api/articles/search:
+ *   get:
+ *     summary: Search articles with relevance scoring
+ *     tags: [Articles]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search term
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category
+ *       - in: query
+ *         name: source
+ *         schema:
+ *           type: string
+ *           enum: [healthywomen, healthcom, guardian, bbc]
+ *         description: Filter by source
+ *     responses:
+ *       200:
+ *         description: Search results returned successfully
+ *       400:
+ *         description: Missing required search query
+ *       500:
+ *         description: Search failed due to server error
  */
 
 router.get('/search', async (req, res) => {
@@ -179,15 +240,43 @@ router.get('/categories', async (req, res) => {
 });
 
 // SOURCE-SPECIFIC ENDPOINTS
-// Get articles from individual sources
 
 /**
- * GET /api/articles/source/:sourceKey
- * Get articles from a specific source only
- * 
- * Params:
- * - sourceKey: healthywomen, healthcom, guardian, or bbc
+ * @swagger
+ * /api/articles/source/{sourceKey}:
+ *   get:
+ *     summary: Get articles from a specific source
+ *     tags: [Articles]
+ *     parameters:
+ *       - in: path
+ *         name: sourceKey
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [healthywomen, healthcom, guardian, bbc]
+ *         description: The news source key
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Maximum number of articles to return
+ *     responses:
+ *       200:
+ *         description: Articles from a specific source returned successfully
+ *       400:
+ *         description: Invalid source key
+ *       500:
+ *         description: Failed to fetch source articles
  */
+
 router.get('/source/:sourceKey', async (req, res) => {
   try {
     const { sourceKey } = req.params;
@@ -241,13 +330,21 @@ router.get('/source/:sourceKey', async (req, res) => {
 });
 
 // MANUAL REFRESH ENDPOINT
-// Trigger immediate article aggregation
 
 /**
- * POST /api/articles/refresh
- * Manually trigger article fetching from all sources
- * Useful for testing and admin purposes
+ * @swagger
+ * /api/articles/refresh:
+ *   post:
+ *     summary: Manually refresh all article sources
+ *     tags: [Articles]
+ *     description: Triggers immediate re-fetching of articles from all data sources. Useful for admins/testing.
+ *     responses:
+ *       200:
+ *         description: Articles refreshed successfully
+ *       500:
+ *         description: Failed to refresh articles
  */
+
 router.post('/refresh', async (req, res) => {
   try {
     console.log('Manual refresh triggered via API');
@@ -284,12 +381,21 @@ router.post('/refresh', async (req, res) => {
 });
 
 // STATISTICS ENDPOINT
-// Get article statistics and system health
 
 /**
- * GET /api/articles/stats
- * Returns system statistics and system's health information
+ * @swagger
+ * /api/articles/stats:
+ *   get:
+ *     summary: Get article statistics and system health
+ *     tags: [Articles]
+ *     description: Returns aggregated statistics such as category distribution, counts per source, and system health status.
+ *     responses:
+ *       200:
+ *         description: Statistics returned successfully
+ *       500:
+ *         description: Failed to fetch statistics
  */
+
 router.get('/stats', async (req, res) => {
   try {
     console.log('Stats API Request');
@@ -350,12 +456,29 @@ router.get('/stats', async (req, res) => {
 });
 
 // SINGLE ARTICLE ENDPOINT (Future enhancement)
-// Get details of a specific article by ID
 
 /**
- * GET /api/articles/:articleId
- * Get detailed information about a specific article
+ * @swagger
+ * /api/articles/{articleId}:
+ *   get:
+ *     summary: Get a single article by ID
+ *     tags: [Articles]
+ *     parameters:
+ *       - in: path
+ *         name: articleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Unique article ID
+ *     responses:
+ *       200:
+ *         description: Single article returned successfully
+ *       404:
+ *         description: Article not found
+ *       500:
+ *         description: Failed to fetch article
  */
+
 router.get('/:articleId', async (req, res) => {
   try {
     const { articleId } = req.params;

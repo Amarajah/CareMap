@@ -4,6 +4,7 @@ const cheerio = require('cheerio');
 const fetch = require('node-fetch');
 const db = require('../database/db'); // PostgreSQL connection
 const { registry } = require('../scrapers'); // Import source registry
+const { v7: uuidv7 } = require('uuid');
 
 
 // Memory cache for recent articles (24 hours max, 500 articles limit)
@@ -39,7 +40,9 @@ let dynamicCategories = new Set();
  * STEP 1: RSS DISCOVERY
  * First try to find RSS feeds from web page URLs
  */
-const discoverRSSFeed = async (pageUrl) => {
+const discoverRSSFeed = async (pageUrl, services) => {
+  const { fetch } = services; // <- injected instead of global
+
   try {
     console.log(`Discovering RSS feed for: ${pageUrl}`);
     
@@ -104,7 +107,7 @@ const parseRSSFeed = async (rssUrl, sourceKey) => {
       const article = {
         id: item.guid || item.link || `${sourceKey}_${Date.now()}`,
         title: item.title,
-        summary: item.contentSnippet || item.description?.substring(0, 300) + '...' || '',
+        summary: item.contentSnippet|| (item.description ? `${item.description.slice(0, 300)}...` : ''),
         link: item.link,
         author: item['dc:creator'] || feed.title,
         publishDate: item.pubDate ? new Date(item.pubDate) : new Date(),
@@ -160,6 +163,7 @@ const scrapeWebPage = async (pageUrl, sourceKey) => {
       article.fetchedAt = new Date().toISOString();
       article.publishDate = article.publishDate || new Date();
       article.id = article.id || `${sourceKey}_${Date.now()}_${Math.random()}`;
+      article.id = article.id || uuidv7();
       
       // Get Open Graph data for featured image
       if (article.link && !article.featuredImage) {
@@ -634,7 +638,10 @@ module.exports = {
   initializeService,
   aggregateAllArticles,
   getArticles,
+  articleCache,
+  parseRSSFeed,
   getCategories,
+  categorizeArticle,
   discoverRSSFeed, // For manual testing
   scrapeWebPage // For manual testing
 };

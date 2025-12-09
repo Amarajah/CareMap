@@ -20,6 +20,7 @@ export default function HealthFacilityMap({ centerLocation }) {
   const [directions, setDirections] = useState(null);
   const [map, setMap] = useState(null);
   const [locationError, setLocationError] = useState(null);
+  const [manualLocation, setManualLocation] = useState('');
 
   /** 
    * STEP 1: Geolocation handling with permissions
@@ -73,9 +74,14 @@ export default function HealthFacilityMap({ centerLocation }) {
       (error) => {
         console.error('Geolocation error:', error);
         setLocationError(error.message || 'Unable to retrieve your location.');
-        searchNearbyHospitals(DEFAULT_CENTER);
+
+        if (manualLocation) {
+          geocodeAddress(manualLocation);
+        } else {
+          searchNearbyHospitals(DEFAULT_CENTER);
+        }
       },
-      { enableHighAccuracy: true, timeout: 15000 }
+      { maximumAge: 300000, enableHighAccuracy: false, timeout: 30000 }
     );
   }
 
@@ -98,9 +104,37 @@ export default function HealthFacilityMap({ centerLocation }) {
         }
         searchNearbyHospitals(DEFAULT_CENTER);
       },
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: false }
     );
   }
+
+  /**
+   * Geocode manually entered address in case userlocation isn't automatically fetched
+   */
+  async function geocodeAddress(address) {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          address
+        )}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+      );
+      const data = await response.json();
+      if (data.status === 'OK') {
+        const loc = data.results[0].geometry.location;
+        setUserLocation(loc);
+        setLocationError(null);
+        searchNearbyHospitals(loc);
+      } else {
+        setLocationError('Invalid address. Please try again.');
+        searchNearbyHospitals(DEFAULT_CENTER);
+      }
+    } catch (err) {
+      console.error('Geocoding error:', err);
+      setLocationError('Error fetching location coordinates.');
+      searchNearbyHospitals(DEFAULT_CENTER);
+    }
+  }
+
 
   /**
    * STEP 2: Run hospital search for centerLocation updates
@@ -159,8 +193,8 @@ export default function HealthFacilityMap({ centerLocation }) {
         fields: [
           'name',
           'formatted_address',
-          'photos',
-          'opening_hours',
+          //'photos',
+          //'opening_hours',
           'formatted_phone_number',
           'website',
           'reviews',
@@ -184,14 +218,14 @@ export default function HealthFacilityMap({ centerLocation }) {
    * STEP 4: Directions handling
    */
   const handleGetDirections = (facility) => {
-    if (!window.google || !window.google.maps) {
+    if (!window.google || !window.google.maps){
       alert('Google Maps API not ready yet');
       return;
     }
 
     const originLocation = centerLocation || userLocation; // use typed address if available
 
-    if (!userLocation) {
+    if (!originLocation) {
       alert('Please enable location access or enter an address first');
       return;
     }
@@ -215,7 +249,9 @@ export default function HealthFacilityMap({ centerLocation }) {
 
   const handleClearDirections = () => setDirections(null);
 
-  const centerCoords = centerLocation || userLocation || DEFAULT_CENTER;
+  const isManual = centerLocation && !userLocation;
+
+  const centerCoords = isManual ? centerLocation : (userLocation || DEFAULT_CENTER);
 
   return (
     <div>
@@ -225,7 +261,7 @@ export default function HealthFacilityMap({ centerLocation }) {
             <strong>Location:</strong> {locationError}
           </p>
           <p className="text-sm text-yellow-700 mt-1">
-            <strong>To fix:</strong> Enable location access.
+            <strong>To fix:</strong> Enable location access or manually enter your current location.
           </p>
         </div>
       )}
@@ -240,9 +276,9 @@ export default function HealthFacilityMap({ centerLocation }) {
       )}
 
       <GoogleMap mapContainerStyle={mapStyle} center={centerCoords} zoom={14} onLoad={setMap}>
-        {userLocation && (
+        {(userLocation || centerLocation) && (
           <Marker
-            position={userLocation}
+            position={userLocation || centerLocation}
             title="Your Location"
             icon="http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
           />

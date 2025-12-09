@@ -9,7 +9,7 @@ const pool = new Pool({
   port: process.env.DB_PORT || 5432,
 });
 
-// Test connection
+// Test Connection
 pool.connect((err) => {
   if (err) {
     console.error('Database connection error:', err);
