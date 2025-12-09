@@ -113,6 +113,6 @@ pg_ctl -D /opt/homebrew/var/postgresql@14 start
 
 # Contact
 
-[Email ](naomi.ibeh69@gmail.com)
+Email: naomi.ibeh69@gmail.com <br>
 [LinkedIn ](https://www.linkedin.com/in/ibe-naomi)
 
