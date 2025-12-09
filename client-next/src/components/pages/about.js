@@ -112,6 +112,16 @@ export default function AboutCareMap() {
             {companyData.description}
           </p>
         </div>
+        {!isLoggedIn && (
+        <div className="absolute top-6 right-6 flex gap-4">
+          <button
+            onClick={() => router.push('/login')}
+            className="border-2 border-white text-white px-8 py-2 rounded-lg font-semibold text-lg hover:bg-white hover:text-blue-600 transition-colors duration-300"
+          >
+            Login
+          </button>
+        </div>
+        )}
       </section>
 
       {/* Stats Section */}
@@ -283,7 +293,7 @@ export default function AboutCareMap() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button 
                 onClick={() => router.push('/login')} 
-                className="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-blue-600 transition-colors duration-300"
+                className="border-2 border-white text-white px-8 py-2 rounded-lg font-semibold text-lg hover:bg-white hover:text-blue-600 transition-colors duration-300"
               >
                 Login
               </button>

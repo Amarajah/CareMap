@@ -280,8 +280,13 @@ export default function HealthFacilityMap({ centerLocation }) {
           <Marker
             position={userLocation || centerLocation}
             title="Your Location"
-            icon="http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+            icon={{
+              url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+              scaledSize: new window.google.maps.Size(50, 50), // change size
+              anchor: new window.google.maps.Point(25, 25) // centers the icon
+            }}
           />
+
         )}
 
         {facilities.map((facility) => (
